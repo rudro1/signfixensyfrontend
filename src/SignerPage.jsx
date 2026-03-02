@@ -18,7 +18,7 @@ function SignerPage() {
     fetch(`${API_BASE_URL}/doc/${id}`)
       .then(res => res.json())
       .then(data => setDoc(data))
-      .catch(err => console.error(err));
+      .catch(err => console.error("Fetch Error:", err));
   }, [id]);
 
   const handleSubmit = async () => {
@@ -50,36 +50,32 @@ function SignerPage() {
         link.download = 'signed.pdf';
         link.click();
         alert("Done! Check your email.");
-      }
-    } catch (err) { alert("Error submitting signature!"); }
+      } else { alert("Error: " + data.error); }
+    } catch (err) { alert("Submission failed!"); }
     setLoading(false);
   };
 
-  if (!doc) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</h2>;
+  if (!doc) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Loading Document...</h2>;
 
-  // FIX: Cloudinary absolute URL check
-  const pdfUrl = doc.pdfPath.startsWith('http') 
-    ? doc.pdfPath 
-    : `${API_BASE_URL}/upload/${doc.pdfPath}`;
+  const pdfUrl = doc.pdfPath.startsWith('http') ? doc.pdfPath : `${API_BASE_URL}/upload/${doc.pdfPath}`;
 
   return (
     <div style={{ background: '#eee', minHeight: '100vh', padding: '20px' }}>
-      <button onClick={handleSubmit} disabled={loading} style={{ position: 'fixed', top: 20, right: 20, padding: '15px 30px', background: 'green', color: 'white', borderRadius: '5px', cursor: 'pointer', zIndex: 1000 }}>
-        {loading ? 'Processing...' : '✅ Finish & Download'}
+      <button onClick={handleSubmit} disabled={loading} style={{ position: 'fixed', top: 20, right: 20, padding: '15px 30px', background: 'green', color: 'white', borderRadius: '5px', zIndex: 1000 }}>
+        {loading ? 'Processing...' : '✅ Finish'}
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Document file={pdfUrl} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
-          {Array.from(new Array(numPages), (_, pageIndex) => (
-            <div key={pageIndex} style={{ position: 'relative', margin: '20px auto', background: 'white', width: 'fit-content', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-              <Page pageNumber={pageIndex + 1} width={800} renderTextLayer={false} renderAnnotationLayer={false} />
-              {doc.signs.map((sign, i) => {
-                if (sign.page !== pageIndex + 1) return null;
-                return (
-                  <div key={i} style={{ position: 'absolute', left: `${sign.x}%`, top: `${sign.y}%`, transform: 'translate(-50%, -50%)', zIndex: 10 }}>
-                    <SignatureCanvas ref={el => sigRefs.current[i] = el} canvasProps={{ width: 180, height: 70, style: { border: '2px solid blue', background: 'white' } }} />
+          {Array.from(new Array(numPages), (_, i) => (
+            <div key={i} style={{ position: 'relative', margin: '20px auto', background: 'white' }}>
+              <Page pageNumber={i + 1} width={800} renderTextLayer={false} renderAnnotationLayer={false} />
+              {doc.signs.map((sign, idx) => (
+                sign.page === i + 1 && (
+                  <div key={idx} style={{ position: 'absolute', left: `${sign.x}%`, top: `${sign.y}%`, transform: 'translate(-50%, -50%)', zIndex: 10 }}>
+                    <SignatureCanvas ref={el => sigRefs.current[idx] = el} canvasProps={{ width: 180, height: 70, style: { border: '2px solid blue', background: 'white' } }} />
                   </div>
-                );
-              })}
+                )
+              ))}
             </div>
           ))}
         </Document>
