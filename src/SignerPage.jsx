@@ -49,25 +49,23 @@ function SignerPage() {
         link.href = `data:application/pdf;base64,${data.pdf}`;
         link.download = 'signed.pdf';
         link.click();
-        alert("Done! Check your email.");
-      } else { alert("Error: " + data.error); }
+        alert("Success! PDF downloaded.");
+      } else { alert("Server Error: " + data.error); }
     } catch (err) { alert("Submission failed!"); }
     setLoading(false);
   };
 
-  if (!doc) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Loading Document...</h2>;
-
-  const pdfUrl = doc.pdfPath.startsWith('http') ? doc.pdfPath : `${API_BASE_URL}/upload/${doc.pdfPath}`;
+  if (!doc) return <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Loading...</h2>;
 
   return (
     <div style={{ background: '#eee', minHeight: '100vh', padding: '20px' }}>
-      <button onClick={handleSubmit} disabled={loading} style={{ position: 'fixed', top: 20, right: 20, padding: '15px 30px', background: 'green', color: 'white', borderRadius: '5px', zIndex: 1000 }}>
-        {loading ? 'Processing...' : '✅ Finish'}
+      <button onClick={handleSubmit} disabled={loading} style={{ position: 'fixed', top: 20, right: 20, padding: '15px 30px', background: 'green', color: 'white', borderRadius: '5px', zIndex: 1000, cursor: 'pointer' }}>
+        {loading ? '⏳ Processing...' : '✅ Finish & Download'}
       </button>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Document file={pdfUrl} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
+        <Document file={doc.pdfPath} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
           {Array.from(new Array(numPages), (_, i) => (
-            <div key={i} style={{ position: 'relative', margin: '20px auto', background: 'white' }}>
+            <div key={i} style={{ position: 'relative', margin: '20px auto', background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
               <Page pageNumber={i + 1} width={800} renderTextLayer={false} renderAnnotationLayer={false} />
               {doc.signs.map((sign, idx) => (
                 sign.page === i + 1 && (
